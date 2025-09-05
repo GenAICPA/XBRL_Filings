@@ -91,8 +91,8 @@ try:
                 "page[number]": str(page_number),
                 "sort": "-processed",
                 "include": "entity",
-                "fields[filing]": "processed,period_end,viewer_url,package_url,fxo_id,country,report_url,errors_count,warnings_count",
-                "fields[entity]": "name,lei",
+                "fields[filing]": "processed,period_end,viewer_url,package_url,fxo_id,entity",
+                "fields[entity]": "name,identifier",
             }
             
             if country:
@@ -103,7 +103,7 @@ try:
             if not response_data or not response_data.get("data"):
                 return []
 
-            # Build LEI -> {name, lei} map from the included entities
+            # Build entity_id -> {name, identifier} map from the included entities
             entities = {
                 inc["id"]: inc["attributes"]
                 for inc in response_data.get("included", [])
@@ -116,15 +116,15 @@ try:
                 try:
                     attributes = f.get("attributes", {})
                     rel = f.get("relationships", {}).get("entity", {})
-                    lei = (rel.get("data") or {}).get("id")
+                    entity_id = (rel.get("data") or {}).get("id")
 
                     # Fallback if linkage wasn't provided: parse LEI from fxo_id prefix
-                    if not lei:
+                    if not entity_id:
                         fxo_id = attributes.get("fxo_id", "")
                         if "-" in fxo_id:
-                            lei = fxo_id.split("-", 1)[0]
+                            entity_id = fxo_id.split("-", 1)[0]
                     
-                    ent = entities.get(lei, {})
+                    ent = entities.get(entity_id, {})
                     
                     # Process date
                     processed_date = attributes.get('processed', '')
@@ -135,7 +135,7 @@ try:
 
                     filings_list.append({
                         "id": f.get("id"),
-                        "lei": lei,
+                        "lei": ent.get("identifier"),
                         "entity_name": ent.get("name"),
                         "processed_date": processed_date,
                         "period_end": attributes.get("period_end"),
@@ -171,8 +171,8 @@ try:
             
             api_params = {
                 "include": "entity",
-                "fields[filing]": "processed,period_end,viewer_url,package_url,fxo_id,country,report_url,errors_count,warnings_count",
-                "fields[entity]": "name,lei",
+                "fields[filing]": "processed,period_end,viewer_url,package_url,fxo_id,entity",
+                "fields[entity]": "name,identifier",
             }
             url = f"{XBRL_API_BASE}/filings/{filing_id}"
             
@@ -191,7 +191,7 @@ try:
                 for item in response_data.get("included", []):
                     if item.get("type") == "entity":
                         entity_name = item.get("attributes", {}).get("name", "Unknown Entity")
-                        lei = item.get("attributes", {}).get("lei")
+                        lei = item.get("attributes", {}).get("identifier")
                         break
 
             if not lei:
@@ -247,7 +247,7 @@ try:
             return {
                 "id": entity.get("id"),
                 "name": attributes.get("name"),
-                "lei": attributes.get("lei"),
+                "lei": attributes.get("identifier"),
                 "cik": attributes.get("cik"),
                 "sic": attributes.get("sic"),
             }
