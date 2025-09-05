@@ -1,29 +1,70 @@
-nstructions for Use
-1. Prerequisites:
+# XBRL Filings MCP Server
 
-You need Python 3.10 or higher installed.
-2. Setup:
+This repository contains a Python-based MCP (Machine-Readable Co-pilot) server that provides tools to query the `filings.xbrl.org` database for XBRL filings.
 
-The complete code for the server is in the file xbrl_mcp_server.py. Make sure you have this file.
-Open your terminal or command prompt and install the necessary dependencies by running:
-pip install "mcp[cli]" httpx
-3. Running the Server:
+## Features
+
+-   Fetch recent XBRL filings, with options to filter by country.
+-   Retrieve detailed information for a specific filing.
+-   Look up details for a specific entity.
+-   Returns company names and LEIs along with filing data.
+
+## Prerequisites
+
+-   Python 3.10 or higher
+
+## Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
+
+2.  **Install dependencies:**
+    The server uses `fastmcp` and `httpx`. You can install them using pip:
+    ```bash
+    pip install "mcp[cli]" httpx
+    ```
+
+## Running the Server
 
 To run the server, execute the script from your terminal:
+```bash
 python3 xbrl_mcp_server.py
-The server will then start and listen for requests from an MCP client. It runs over standard input/output (stdio), so you won't see any server output in the terminal unless there's an error.
-4. Connecting to an MCP Client (Example):
+```
+The server runs over standard input/output (stdio) and will listen for requests from a connected MCP client.
 
-To use the server, you need to configure an MCP client to connect to it. For example, if you were using Claude for Desktop, you would edit its configuration file (claude_desktop_config.json) to tell it how to run the server.
-You would add an entry like this, making sure to use the absolute path to the script:
-{
-  "mcpServers": {
-    "xbrl_filings": {
-      "command": "python3",
-      "args": [
-        "/path/to/your/project/xbrl_mcp_server.py"
-      ]
-    }
-  }
-}
-Once the client is configured and restarted, it will be able to see and use the get_filings tool provided by the server.
+## API Tools
+
+The server exposes the following tools to an MCP client:
+
+### `get_filings`
+
+Get recent XBRL filings from the `filings.xbrl.org` database.
+
+-   **Args:**
+    -   `country` (Optional[str]): The two-letter ISO country code to filter by (e.g., `US`, `GB`).
+    -   `page_size` (int): The number of filings to return. Defaults to `5`.
+    -   `page_number` (int): The page number to retrieve. Defaults to `1`.
+-   **Returns:** A list of filing objects.
+
+### `get_filing`
+
+Retrieves a specific filing by its ID.
+
+-   **Args:**
+    -   `filing_id` (str): The unique identifier of the filing.
+-   **Returns:** A single filing object.
+
+### `get_entity`
+
+Retrieves details for a specific entity by its ID.
+
+-   **Args:**
+    -   `entity_id` (str): The unique identifier of the entity.
+-   **Returns:** An entity object with details like name, LEI, CIK, and SIC.
+
+## Data Source
+
+This server is a wrapper around the official XBRL Filings API. For more information about the data, visit [filings.xbrl.org](https://filings.xbrl.org).
